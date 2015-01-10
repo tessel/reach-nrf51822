@@ -12,6 +12,7 @@ The current host implementation uses `noble` to interface with the BLE adapter o
 
 ##Road map
 Priorities
+
 1. Get firmware build & deploy set up for nrf51822 w/open source tools
 * Port current client code to C using nrf51822 SDK
   * Include UART/I2C/etc. interfaces
