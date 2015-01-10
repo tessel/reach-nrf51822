@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "ble-ble113a": "^0.1.12",
+    "bleadvertise": "^0.1.1",
+    "noble": "^0.3.7"
+  }
+}

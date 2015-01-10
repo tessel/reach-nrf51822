@@ -1,0 +1,67 @@
+{
+  "services": [
+    {
+      "name": "Device Information",
+      "uuid": "180A",
+      "characteristics": [
+        {
+          "name" : "Manufacturer Name String",
+          "uuid": "2A29",
+          "properties": ["read"],
+          "type": "string"
+        },
+        {
+          "name" : "Hardware Revision String",
+          "uuid": "2A27",
+          "properties": ["read"],
+          "type": "string"
+        },
+        {
+          "name" : "Firmware Revision String",
+          "uuid": "2A26",
+          "properties": ["read"],
+          "type": "string"
+        },
+      ]
+    },
+    {
+      "name": "Generic Access",
+      "uuid": "1800",
+      "characteristics": [
+        //TODO
+      ]
+    },
+    {
+      "name": "Gossip IO Protocol Service",
+      "uuid": "88439000-9550-43A0-B72E-6C8E97000000",
+      "characteristics": [
+        {
+          "name": "gossip_commands",
+          "uuid": "88439000-9550-43A0-B72E-6C8E97000001",
+          "properties": ["read", "write", "writewithoutresponse"],
+          "type": "raw"
+        },
+        {
+          "name": "gossip_responses",
+          "uuid": "88439000-9550-43A0-B72E-6C8E97000002",
+          "properties": ["read", "notify", "indicate"],
+          "type": "raw"
+        }
+      ]
+    },
+    {
+      "name": "Reach Configuration Protocol Service",
+      "uuid": "88439001-9550-43A0-B72E-6C8E97000000",
+      "characteristics": [
+        //TODO
+      ]
+    },
+    {
+      "name": "Reach OTA Update Protocol Service",
+      "uuid": "88439002-9550-43A0-B72E-6C8E97000000",
+      "characteristics": [
+        //TODO
+      ]
+    }
+  ]
+}
