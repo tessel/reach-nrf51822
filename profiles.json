@@ -37,13 +37,13 @@
       "characteristics": [
         {
           "name": "gossip_commands",
-          "uuid": "88439000-9550-43A0-B72E-6C8E97000001",
+          "uuid": "88439000-9550-43A0-B72E-6C8E97010000",
           "properties": ["read", "write", "writewithoutresponse"],
           "type": "raw"
         },
         {
           "name": "gossip_responses",
-          "uuid": "88439000-9550-43A0-B72E-6C8E97000002",
+          "uuid": "88439000-9550-43A0-B72E-6C8E97020000",
           "properties": ["read", "notify", "indicate"],
           "type": "raw"
         }
@@ -51,14 +51,14 @@
     },
     {
       "name": "Reach Configuration Protocol Service",
-      "uuid": "88439001-9550-43A0-B72E-6C8E97000000",
+      "uuid": "88439000-9550-43A0-B72E-6C8E98000000",
       "characteristics": [
         //TODO
       ]
     },
     {
       "name": "Reach OTA Update Protocol Service",
-      "uuid": "88439002-9550-43A0-B72E-6C8E97000000",
+      "uuid": "88439000-9550-43A0-B72E-6C8E99000000",
       "characteristics": [
         //TODO
       ]
