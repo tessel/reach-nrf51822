@@ -33,7 +33,10 @@ npm-debug.log
 nrf51_sdk*
 s110_nrf51822*
 
-_build
+# GDB init file
+.gdbinit
+
+# Build directories
 build
 bin
 obj

@@ -36,9 +36,13 @@ NM       		:= "$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-nm"
 OBJDUMP  		:= "$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objdump"
 OBJCOPY  		:= "$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objcopy"
 SIZE    		:= "$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-size"
+GDB					:= "$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-gdb"
 
 JLINK = /usr/bin/JLinkExe
 JLINKGDBSERVER = /usr/bin/JLinkGDBServer
+GDB_DIRECTORY = /usr/bin
+
+GDB_PORT_NUMBER := 2331
 
 #function for removing duplicates in a list
 remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
@@ -79,9 +83,11 @@ INC_PATHS += -I$(SDK_PATH)components/softdevice/common/softdevice_handler
 INC_PATHS += -I$(SDK_PATH)components/libraries/scheduler
 INC_PATHS += -I$(SDK_PATH)components/libraries/util
 
-OBJECT_DIRECTORY = _build
-LISTING_DIRECTORY = $(OBJECT_DIRECTORY)
-OUTPUT_BINARY_DIRECTORY = $(OBJECT_DIRECTORY)
+OBJECT_DIRECTORY = obj
+LISTING_DIRECTORY = bin
+OUTPUT_BINARY_DIRECTORY = build
+
+ELF := $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
 
 # Sorting removes duplicates
 BUILD_DIRECTORIES := $(sort $(OBJECT_DIRECTORY) $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY) )
@@ -236,9 +242,6 @@ recover.jlink:
 pin-reset.jlink:
 	echo "device nrf51822\nspeed 1000\nw4 4001e504 2\nw4 40000544 1\nr\nexit\n" > $(OUTPUT_BINARY_DIRECTORY)/pin-reset.jlink
 
-flash.jlink:
-	echo "device nrf51822\nspeed 1000\nr\nloadbin $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).bin, $(FLASH_START_ADDRESS)\nr\ng\nexit\n" > $(OUTPUT_BINARY_DIRECTORY)/flash.jlink
-
 erase-all: erase-all.jlink
 	$(JLINK) $(OUTPUT_BINARY_DIRECTORY)/erase-all.jlink || true
 	
@@ -252,10 +255,25 @@ ifndef SOFTDEVICE
 endif
 	
 	# Convert from hex to binary. Split original hex in two to avoid huge (>250 MB) binary file with just 0s. 
-	$(OBJCOPY) -Iihex -Obinary --remove-section .sec3 $(SOFTDEVICE) $(OUTPUT_BINARY_DIRECTORY)/_mainpart.bin
-	$(OBJCOPY) -Iihex -Obinary --remove-section .sec1 --remove-section .sec2 $(SOFTDEVICE) $(OUTPUT_BINARY_DIRECTORY)/_uicr.bin
+	$(OBJCOPY) -Iihex -Obinary $(SOFTDEVICE) $(OUTPUT_BINARY_DIRECTORY)/softdevice.bin
 	
 	-$(JLINK) $(OUTPUT_BINARY_DIRECTORY)/flash-softdevice.jlink
 
 flash-softdevice.jlink:
-	echo "device nrf51822\nspeed 1000\nw4 4001e504 1\nloadbin \"$(OUTPUT_BINARY_DIRECTORY)/_mainpart.bin\" 0\nloadbin \"$(OUTPUT_BINARY_DIRECTORY)/_uicr.bin\" 0x10001000\nr\ng\nexit\n" > $(OUTPUT_BINARY_DIRECTORY)/flash-softdevice.jlink
+	echo "device nrf51822\nspeed 1000\nw4 4001e504 1\nloadbin \"$(OUTPUT_BINARY_DIRECTORY)/softdevice.bin\" 0\nr\ng\nexit\n" > $(OUTPUT_BINARY_DIRECTORY)/flash-softdevice.jlink
+
+startdebug: stopdebug debug.jlink .gdbinit
+	$(JLINKGDBSERVER) -if swd -speed 1000 -port $(GDB_PORT_NUMBER) &
+	sleep 3
+	$(GDB) $(ELF)
+
+stopdebug:
+	-killall $(JLINKGDBSERVER)
+
+.gdbinit:
+	echo "target remote localhost:$(GDB_PORT_NUMBER)\nmonitor flash download = 1\nmonitor flash device = nrf51822\nbreak main\nmon reset\n" > .gdbinit
+
+debug.jlink:
+	echo "Device nrf51822" > $(OUTPUT_BINARY_DIRECTORY)/debug.jlink
+
+.PHONY: flash flash-softdevice erase-all startdebug stopdebug
