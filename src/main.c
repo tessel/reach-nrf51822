@@ -27,6 +27,7 @@
 #include "softdevice_handler.h"
 #include "app_timer.h"
 #include "ble_gap.h"
+#include "gossip.h"
 // #include "device_manager.h"
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                 /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
@@ -51,11 +52,13 @@
 #define NON_CONNECTABLE_ADV_INTERVAL  MSEC_TO_UNITS(100, UNIT_0_625_MS)             /**< The advertising interval for non-connectable advertisement (100 ms). This value can vary between 100ms to 10.24s). */
 #define CONNECTABLE_ADV_TIMEOUT       30                                            /**< Time for which the device must be advertising in connectable mode (in seconds). */
 
-const char* device_name = "Reach";
-static ble_gap_adv_params_t m_adv_params;  
-ble_advdata_uuid_list_t services;
-static uint8_t command_char_value[MAX_CHAR_VAL_LEN];  
-static uint8_t response_char_value[MAX_CHAR_VAL_LEN];
+const char*                     device_name = "Reach";
+static uint16_t                 m_conn_handle = BLE_CONN_HANDLE_INVALID;
+static ble_gap_adv_params_t     m_adv_params;
+ble_advdata_uuid_list_t         services;
+static uint8_t                  command_char_value[MAX_CHAR_VAL_LEN];
+static uint8_t                  response_char_value[MAX_CHAR_VAL_LEN];
+gossip_t                        gossip;
 
 /**@brief Callback function for asserts in the SoftDevice.
 *
@@ -204,8 +207,14 @@ static void gatt_init(void)
   ble_gatts_char_handles_t response_char_handle;
   
   err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &gossip_service_uuid, &gossip_service_handle);
+  gossip.service_handle = gossip_service_handle;
+  
   char_add(gossip_service_handle, command_char_uuid, command_char_value, command_char_handle);
+  gossip.command_handles = command_char_handle;
+  
   char_add(gossip_service_handle, response_char_uuid, response_char_value, response_char_handle);
+  gossip.response_handles = response_char_handle;
+  
 
   // uuid_list[1] = gossip_service;
   // services.uuid_cnt = sizeof(uuid_list) / sizeof(uuid_list[0]);
@@ -214,12 +223,27 @@ static void gatt_init(void)
 
 static void on_ble_evt(ble_evt_t * p_ble_evt)
 {
+  // uint32_t err_code;
   
+  switch (p_ble_evt->header.evt_id)
+  {
+    case BLE_GAP_EVT_CONNECTED:
+      m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+      break;
+
+    case BLE_GAP_EVT_DISCONNECTED:
+      m_conn_handle = BLE_CONN_HANDLE_INVALID;
+      break;
+
+    default:
+      break;
+  }
 }
 
 static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
   // dm_ble_evt_handler(p_ble_evt);
+  ble_gossip_on_ble_evt(&gossip, p_ble_evt);
 }
 
 /**@brief Function for initializing the BLE stack.
@@ -253,6 +277,23 @@ static void power_manage(void)
   APP_ERROR_CHECK(err_code);
 }
 
+void gossip_evt_handler(gossip_t * gossip, ble_gossip_evt_t * p_evt)
+{
+
+}
+
+static void make_gossip(void)
+{
+  uint32_t err_code;
+  
+  ble_gossip_init_t gossip_init;
+  
+  gossip_init.evt_handler = &gossip_evt_handler;
+  
+  err_code = ble_gossip_init(&gossip, &gossip_init);
+  APP_ERROR_CHECK(err_code);
+  
+}
 
 /**
 * @brief Function for application main entry.
@@ -261,6 +302,7 @@ int main(void)
 {
   // Initialize.
   ble_stack_init();
+  make_gossip();
   gatt_init();
   advertising_init();
   

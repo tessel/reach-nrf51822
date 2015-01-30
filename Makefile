@@ -59,6 +59,7 @@ $(SDK_PATH)components/libraries/util/nrf_assert.c \
 $(SDK_PATH)components/drivers_nrf/uart/app_uart_fifo.c \
 $(SDK_PATH)components/drivers_nrf/hal/nrf_delay.c \
 src/main.c \
+src/gossip.c \
 $(SDK_PATH)components/softdevice/common/softdevice_handler/softdevice_handler.c \
 $(SDK_PATH)components/toolchain/system_nrf51.c \
 $(SDK_PATH)components/ble/common/ble_conn_params.c \
