@@ -233,6 +233,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
 
     case BLE_GAP_EVT_DISCONNECTED:
       m_conn_handle = BLE_CONN_HANDLE_INVALID;
+      advertising_start();
       break;
 
     default:
@@ -244,6 +245,7 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
   // dm_ble_evt_handler(p_ble_evt);
   ble_gossip_on_ble_evt(&gossip, p_ble_evt);
+  on_ble_evt(p_ble_evt);
 }
 
 /**@brief Function for initializing the BLE stack.
