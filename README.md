@@ -7,8 +7,30 @@ Use a JLink-speaking programmer and connect one of the devboards.
 Run `make flash-softdevice` to get the softdevice onto the nrf51822.
 
 ##Building the project
-You will need to modify the make file to point to your local copy of `arm-non-eabi-*`.
-After that, `make` will compile and link the application binary. Use `make flash` to load the application on the nrf51822 after the softdevice.
+
+###Requirements
+
+**Install JLink GDB server.** scroll down to "J-Link software & documentation pack for MAC") https://www.segger.com/jlink-software.html
+
+**Install Noric packages.** Try the following handy script.
+
+```
+mkdir -p nRF51_SDK_7.1.0
+curl http://developer.nordicsemi.com/nRF51_SDK/nRF51_SDK_7.1.0_372d17a.zip | tar xvf - -C nRF51_SDK_7.1.0
+
+mkdir -p s110_nrf51822_7.1.0
+curl http://www.nordicsemi.com/eng/nordic/download_resource/30082/12/50064729 | tar xvf - -C s110_nrf51822_7.1.0
+```
+
+**Install gcc-arm.** `brew tap tessel/tools` and `brew install gcc-arm`. (If your gcc-arm location is different, set `make GNU_INSTALL_ROOT=/usr/local/wherever`.)
+
+###Running code
+
+Use `make` to compile and link the application binary.
+
+Use `make flash-softdevice` to load the softdevice on the nrf51822.
+
+Use `make flash` to load the application on the nrf51822 after the softdevice.
 
 ##Gossip BLE Profile
 A preliminary draft of the GATT Profile for communicating with Gossip over BLE is in the `profiles.json` file in this repo. It currently defines 3 proprietary services: `"Gossip IO Protocol Service"`, `"Reach Configuration Protocol Service"`, and `"Reach OTA Update Protocol Service"`. The former has 2 characteristics used separately for upstream and downstream message passing, mimicking a duplex stream. The latter two services are in place as an example for UUID assignment conventions should more services be deemed necessary.
