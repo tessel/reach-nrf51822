@@ -11,11 +11,10 @@ SDK_PATH = ./nRF51_SDK_7.1.0/
 SOFTDEVICE = s110_nrf51822_7.1.0/s110_nrf51822_7.1.0_softdevice.hex
 
 TEMPLATE_PATH = ./$(SDK_PATH)components/toolchain/gcc
-ifeq ($(OS),Windows_NT)
-include $(TEMPLATE_PATH)/Makefile.windows
-else
-include $(TEMPLATE_PATH)/Makefile.posix
-endif
+
+GNU_INSTALL_ROOT := /usr/local
+GNU_PREFIX := arm-none-eabi
+GNU_VERSION := $(shell $(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-gcc -dumpversion)
 
 MK := mkdir
 RM := rm -rf
