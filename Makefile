@@ -59,11 +59,13 @@ $(SDK_PATH)components/drivers_nrf/uart/app_uart_fifo.c \
 $(SDK_PATH)components/drivers_nrf/hal/nrf_delay.c \
 src/main.c \
 src/gossip.c \
+src/i2c.c \
 $(SDK_PATH)components/softdevice/common/softdevice_handler/softdevice_handler.c \
 $(SDK_PATH)components/toolchain/system_nrf51.c \
 $(SDK_PATH)components/ble/common/ble_conn_params.c \
 $(SDK_PATH)components/ble/common/ble_advdata.c \
 $(SDK_PATH)components/ble/common/ble_srv_common.c \
+
 
 #assembly files common to all targets
 ASM_SOURCE_FILES  = $(SDK_PATH)components/toolchain/gcc/gcc_startup_nrf51.s
