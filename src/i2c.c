@@ -176,39 +176,25 @@ int i2c_disable () {
     return 0;
 }
 
-int i2c_master_transfer (const uint8_t *txbuf, size_t txbuf_len,
- uint8_t *rxbuf, size_t rxbuf_len)
-{
-	bool transfer_succeeded = false;
-	if (txbuf_len > 0 && twi_master_clear_bus(i2c_config.scl, i2c_config.sda)) {
-        transfer_succeeded = i2c_master_send(txbuf, txbuf_len);
-	}
-	
-	if (rxbuf_len > 0) {
-        transfer_succeeded = transfer_succeeded & i2c_master_receive(rxbuf, rxbuf_len);
-	}
-
-	return transfer_succeeded;
-}
-
 int i2c_power_cycle() {
-	// Recover the peripheral as indicated by PAN 56: "TWI: TWI module lock-up." found at
+    // Recover the peripheral as indicated by PAN 56: "TWI: TWI module lock-up." found at
     // Product Anomaly Notification document found at 
     // https://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822/#Downloads
     i2c_config.I2C_bus->EVENTS_ERROR = 0;
-    i2c_config.I2C_bus->ENABLE       = 0; //TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos; 
+    i2c_config.I2C_bus->ENABLE       = 0; 
     i2c_config.I2C_bus->POWER        = 0;
     nrf_delay_us(5);
     i2c_config.I2C_bus->POWER        = 1;
-    i2c_config.I2C_bus->ENABLE       = I2C_ENABLE;//TWI_ENABLE_ENABLE_Enabled << TWI_ENABLE_ENABLE_Pos;
+    i2c_config.I2C_bus->ENABLE       = I2C_ENABLE;
 
     (void)(i2c_enable());
 
     return false;
 }
 
-int i2c_master_send (const uint8_t *data, size_t txbuf_len) {
-	uint32_t timeout = MAX_WAIT; /* max loops to wait for EVENTS_TXDSENT event*/
+// this sends data without a stop bit
+int i2c_master_send_data(const uint8_t *data, size_t txbuf_len) {
+    uint32_t timeout = MAX_WAIT; /* max loops to wait for EVENTS_TXDSENT event*/
 
     if (txbuf_len == 0)
     {
@@ -239,19 +225,38 @@ int i2c_master_send (const uint8_t *data, size_t txbuf_len) {
 
         i2c_config.I2C_bus->TXD = *data++;
     }
-    /** @snippet [TWI HW master write] */
 
-    // if (issue_stop_condition)
-    // {
-    // always issue stop condition?
-        // NRF_TWI0->EVENTS_STOPPED = 0;
-        // NRF_TWI0->TASKS_STOP     = 1;
-        // /* Wait until stop sequence is sent */ 
-        // while(NRF_TWI0->EVENTS_STOPPED == 0) 
-        // {
-        //     // Do nothing.
-        // }
-    // }
+    return true;
+}
+
+int i2c_master_transfer (const uint8_t *txbuf, size_t txbuf_len,
+ uint8_t *rxbuf, size_t rxbuf_len)
+{
+	bool transfer_succeeded = false;
+	if (txbuf_len > 0 && twi_master_clear_bus(i2c_config.scl, i2c_config.sda)) {
+        transfer_succeeded = i2c_master_send_data(txbuf, txbuf_len);
+	}
+	
+	if (rxbuf_len > 0 && transfer_succeeded) {
+        transfer_succeeded = transfer_succeeded & i2c_master_receive(rxbuf, rxbuf_len);
+	}
+
+	return transfer_succeeded;
+}
+
+// this will issue a stop bit after the send
+int i2c_master_send (const uint8_t *data, size_t txbuf_len) {
+	
+    i2c_master_send_data(data, txbuf_len);
+
+    NRF_TWI0->EVENTS_STOPPED = 0;
+    NRF_TWI0->TASKS_STOP     = 1;
+    /* Wait until stop sequence is sent */ 
+    while(NRF_TWI0->EVENTS_STOPPED == 0) 
+    {
+        // Do nothing.
+    }
+
     return true;
 }
 
