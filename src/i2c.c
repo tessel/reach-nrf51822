@@ -6,6 +6,8 @@
  * Original files are located in nRF51_SDK_7.1.0/components/drivers_nrf/twi_master
 */
 
+I2C_config_t i2c_config = {I2C_400KPBS, 0, 0, 0x00, NRF_TWI0};
+
 #define MAX_WAIT 20000UL // max i2c hang time. should eventually replace with timer...?
 
 static void I2C_PIN_LOW(int pin) {
@@ -56,10 +58,6 @@ static bool twi_master_clear_bus(int scl, int sda)
       | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos)   \
       | (GPIO_PIN_CNF_DIR_Output    << GPIO_PIN_CNF_DIR_Pos);
 
-    // TWI_SDA_HIGH();
-    // TWI_SCL_HIGH();
-    // TWI_DELAY();
-
     I2C_PIN_HIGH(sda);
     I2C_PIN_HIGH(scl);
     I2C_DELAY();
@@ -77,11 +75,6 @@ static bool twi_master_clear_bus(int scl, int sda)
         // for slave to respond) to SCL line and wait for SDA come high.
         for (i=18; i--;)
         {
-            // TWI_SCL_LOW();
-            // TWI_DELAY();
-            // TWI_SCL_HIGH();
-            // TWI_DELAY();
-
             I2C_PIN_LOW(scl);
     		I2C_DELAY();
             I2C_PIN_HIGH(scl);
@@ -111,51 +104,66 @@ static bool twi_master_clear_bus(int scl, int sda)
 
 // }
 
-// freq can be one of: 100 kbps (0x01980000), 
-void i2c_enable (int scl, int sda, I2C_freq freq, uint32_t addr) {
-	NRF_GPIO->PIN_CNF[scl] =     \
+void i2c_init_config(uint8_t scl, uint8_t sda, uint32_t addr) {
+    i2c_config.scl = scl;
+    i2c_config.sda = sda;
+    i2c_config.addr = addr;
+}
+
+// returns 0 when enabled, 1 on error
+int i2c_enable () {
+
+    if (!i2c_config.scl || !i2c_config.sda) return 1;
+
+	NRF_GPIO->PIN_CNF[i2c_config.scl] =     \
         (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos) \
       | (GPIO_PIN_CNF_DRIVE_S0D1     << GPIO_PIN_CNF_DRIVE_Pos) \
       | (GPIO_PIN_CNF_PULL_Pullup    << GPIO_PIN_CNF_PULL_Pos)  \
       | (GPIO_PIN_CNF_INPUT_Connect  << GPIO_PIN_CNF_INPUT_Pos) \
       | (GPIO_PIN_CNF_DIR_Input      << GPIO_PIN_CNF_DIR_Pos);
 
-    NRF_GPIO->PIN_CNF[sda] =      \
+    NRF_GPIO->PIN_CNF[i2c_config.sda] =      \
         (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos) \
       | (GPIO_PIN_CNF_DRIVE_S0D1     << GPIO_PIN_CNF_DRIVE_Pos) \
       | (GPIO_PIN_CNF_PULL_Pullup    << GPIO_PIN_CNF_PULL_Pos)  \
       | (GPIO_PIN_CNF_INPUT_Connect  << GPIO_PIN_CNF_INPUT_Pos) \
       | (GPIO_PIN_CNF_DIR_Input      << GPIO_PIN_CNF_DIR_Pos);
 
-    NRF_TWI0->ADDRESS = addr;//(address >> 1);
-    NRF_TWI0->EVENTS_RXDREADY = 0;
-    NRF_TWI0->EVENTS_TXDSENT  = 0;
-    NRF_TWI0->PSELSCL         = scl;//TWI_MASTER_CONFIG_CLOCK_PIN_NUMBER;
-    NRF_TWI0->PSELSDA         = sda;//TWI_MASTER_CONFIG_DATA_PIN_NUMBER;
-    NRF_TWI0->FREQUENCY       = freq; //TWI_FREQUENCY_FREQUENCY_K100 << TWI_FREQUENCY_FREQUENCY_Pos;
-    NRF_TWI0->ENABLE          = I2C_ENABLE;//TWI_ENABLE_ENABLE_Enabled << TWI_ENABLE_ENABLE_Pos;
+    i2c_config.I2C_bus->ADDRESS = i2c_config.addr;
+    i2c_config.I2C_bus->EVENTS_RXDREADY = 0;
+    i2c_config.I2C_bus->EVENTS_TXDSENT  = 0;
+    i2c_config.I2C_bus->PSELSCL         = i2c_config.scl;
+    i2c_config.I2C_bus->PSELSDA         = i2c_config.sda;
+    i2c_config.I2C_bus->FREQUENCY       = i2c_config.freq;
+    i2c_config.I2C_bus->ENABLE          = I2C_ENABLE;
 
     // these three lines appear to do the following:
     // set up peripherial interconnect such that whenever i2c 
     // crosses a byte boundry (end of a byte), the i2c task 
     // will be suspended.
-	NRF_PPI->CH[0].EEP        = (uint32_t)&NRF_TWI0->EVENTS_BB;
-    NRF_PPI->CH[0].TEP        = (uint32_t)&NRF_TWI0->TASKS_SUSPEND;
+	NRF_PPI->CH[0].EEP        = (uint32_t)&(i2c_config.I2C_bus)->EVENTS_BB;
+    NRF_PPI->CH[0].TEP        = (uint32_t)&(i2c_config.I2C_bus)->TASKS_SUSPEND;
     NRF_PPI->CHENCLR          = PPI_CHENCLR_CH0_Msk;
     
-    twi_master_clear_bus(scl, sda);
+    twi_master_clear_bus(i2c_config.scl, i2c_config.sda);
+
+    return 0;
 }
 
-void i2c_disable (int scl, int sda) {
+// returns 0 when disabled, 1 on error
+int i2c_disable () {
+
+    if (!i2c_config.scl || !i2c_config.sda) return 1;
+
 	// turn scl & sda back into normal pins
-	NRF_GPIO->PIN_CNF[scl] =     \
+	NRF_GPIO->PIN_CNF[i2c_config.scl] =     \
         (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos) \
       | (GPIO_PIN_CNF_DRIVE_S0D1     << GPIO_PIN_CNF_DRIVE_Pos) \
       | (GPIO_PIN_CNF_PULL_Disabled    << GPIO_PIN_CNF_PULL_Pos)  \
       | (GPIO_PIN_CNF_INPUT_Disconnect  << GPIO_PIN_CNF_INPUT_Pos) \
       | (GPIO_PIN_CNF_DIR_Input      << GPIO_PIN_CNF_DIR_Pos);
 
-    NRF_GPIO->PIN_CNF[sda] =      \
+    NRF_GPIO->PIN_CNF[i2c_config.sda] =      \
         (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos) \
       | (GPIO_PIN_CNF_DRIVE_S0D1     << GPIO_PIN_CNF_DRIVE_Pos) \
       | (GPIO_PIN_CNF_PULL_Disabled    << GPIO_PIN_CNF_PULL_Pos)  \
@@ -163,25 +171,27 @@ void i2c_disable (int scl, int sda) {
       | (GPIO_PIN_CNF_DIR_Input      << GPIO_PIN_CNF_DIR_Pos);
 
 	// disable twi0
-    NRF_TWI0->ENABLE = 0;
+    i2c_config.I2C_bus->ENABLE = 0;
+
+    return 0;
 }
 
-int i2c_master_transfer (int scl, int sda, I2C_freq freq, uint32_t addr,
-	const uint8_t *txbuf, size_t txbuf_len, uint8_t *rxbuf, size_t rxbuf_len)
+int i2c_master_transfer (const uint8_t *txbuf, size_t txbuf_len,
+ uint8_t *rxbuf, size_t rxbuf_len)
 {
 	bool transfer_succeeded = false;
-	if (txbuf_len > 0 && twi_master_clear_bus(scl, sda)) {
-        transfer_succeeded = i2c_master_send(scl, sda, freq, addr, txbuf, txbuf_len);
+	if (txbuf_len > 0 && twi_master_clear_bus(i2c_config.scl, i2c_config.sda)) {
+        transfer_succeeded = i2c_master_send(txbuf, txbuf_len);
 	}
 	
 	if (rxbuf_len > 0) {
-        transfer_succeeded = transfer_succeeded & i2c_master_receive(scl, sda, freq, addr, rxbuf, rxbuf_len);
+        transfer_succeeded = transfer_succeeded & i2c_master_receive(rxbuf, rxbuf_len);
 	}
 
 	return transfer_succeeded;
 }
 
-int i2c_power_cycle(int scl, int sda, I2C_freq freq, uint32_t addr) {
+int i2c_power_cycle() {
 	// Recover the peripheral as indicated by PAN 56: "TWI: TWI module lock-up." found at
     // Product Anomaly Notification document found at 
     // https://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822/#Downloads
@@ -192,12 +202,12 @@ int i2c_power_cycle(int scl, int sda, I2C_freq freq, uint32_t addr) {
     NRF_TWI0->POWER        = 1;
     NRF_TWI0->ENABLE       = I2C_ENABLE;//TWI_ENABLE_ENABLE_Enabled << TWI_ENABLE_ENABLE_Pos;
 
-    (void)(i2c_enable(scl, sda, freq, addr));
+    (void)(i2c_enable());
 
     return false;
 }
 
-int i2c_master_send (int scl, int sda, I2C_freq freq, uint32_t addr, const uint8_t *data, size_t txbuf_len) {
+int i2c_master_send (const uint8_t *data, size_t txbuf_len) {
 	uint32_t timeout = MAX_WAIT; /* max loops to wait for EVENTS_TXDSENT event*/
 
     if (txbuf_len == 0)
@@ -219,7 +229,7 @@ int i2c_master_send (int scl, int sda, I2C_freq freq, uint32_t addr, const uint8
 
         if (timeout == 0 || NRF_TWI0->EVENTS_ERROR != 0)
         {
-            return i2c_power_cycle(scl, sda, freq, addr);
+            return i2c_power_cycle();
         }
         NRF_TWI0->EVENTS_TXDSENT = 0;
         if (--txbuf_len == 0)
@@ -245,7 +255,7 @@ int i2c_master_send (int scl, int sda, I2C_freq freq, uint32_t addr, const uint8
     return true;
 }
 
-int i2c_master_receive (int scl, int sda, I2C_freq freq, uint32_t addr, uint8_t *rxbuf, size_t rxbuf_len) {
+int i2c_master_receive (uint8_t *rxbuf, size_t rxbuf_len) {
 	uint32_t timeout = MAX_WAIT; /* max loops to wait for RXDREADY event*/
 
     if (rxbuf_len == 0)
@@ -277,7 +287,7 @@ int i2c_master_receive (int scl, int sda, I2C_freq freq, uint32_t addr, uint8_t 
 
         if (timeout == 0 || NRF_TWI0->EVENTS_ERROR != 0)
         {
-            return i2c_power_cycle(scl, sda, freq, addr);
+            return i2c_power_cycle();
         }
 
         *rxbuf++ = NRF_TWI0->RXD;

@@ -322,8 +322,8 @@ int main(void)
   
 
   // set up and send i2c commands
-  int scl = 16;
-  int sda = 17;
+  i2c_init_config(16, 17, 0xDE);
+  i2c_enable();
 
   // pull scl and sda high
   // nrf_gpio_cfg_output(scl);
@@ -332,14 +332,12 @@ int main(void)
   // NRF_GPIO->OUTSET = (1 << sda);
 
   uint8_t txbuf[1] = {0x0D};
-  i2c_enable(scl, sda, I2C_400KPBS, 0xDE);
   uint8_t rxbuf[1] = {0};
 
   while (1) {
     LEDS_INVERT(1 << leds_list[0]);
     // i2c_master_send(scl, sda, I2C_400KPBS, 0x1D, txbuf, 5);
-    i2c_master_transfer(scl, sda, I2C_400KPBS, 0x1D,
-     txbuf, 1, rxbuf, 1);
+    i2c_master_transfer(txbuf, 1, rxbuf, 1);
 
     if (rxbuf[0] == 0x2A) {
       // turn on led 1

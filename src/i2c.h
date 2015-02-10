@@ -15,14 +15,13 @@ typedef enum
     I2C_400KPBS = 0x06680000
 } I2C_freq;
 
-typedef struct
+typedef struct I2C_config
 {
 	I2C_freq freq;
 	uint8_t scl;
 	uint8_t sda;
 	uint32_t addr;
-	uint32_t I2C_bus;
-	
+	NRF_TWI_Type* I2C_bus;
 } I2C_config_t;
 
 #define I2C_ENABLE 5UL
@@ -45,16 +44,11 @@ typedef struct
                                       if ( (leds_mask) & (1 << pin) )   \
                                           nrf_gpio_cfg_output(pin); } while (0)
 
-
-void i2c_enable (int scl, int sda, I2C_freq freq, uint32_t addr);
-void i2c_disable (int scl, int sda);
-int i2c_master_transfer (int scl, int sda, I2C_freq freq, uint32_t addr, const uint8_t *txbuf, size_t txbuf_len, uint8_t *rxbuf, size_t rxbuf_len);
-int i2c_master_send (int scl, int sda, I2C_freq freq, uint32_t addr, const uint8_t *txbuf, size_t txbuf_len);
-int i2c_master_receive (int scl, int sda, I2C_freq freq, uint32_t addr, uint8_t *rxbuf, size_t rxbuf_len);
-
-// int i2c_slave_transfer (uint32_t port, const uint8_t *txbuf, size_t txbuf_len, uint8_t *rxbuf, size_t rxbuf_len);
-// int i2c_slave_send (uint32_t port, const uint8_t *txbuf, size_t txbuf_len);
-// int i2c_slave_receive (uint32_t port, uint8_t *rxbuf, size_t rxbuf_len);
-// void i2c_set_slave_addr (uint32_t port, uint8_t slave_addr);
+void i2c_init_config(uint8_t sda, uint8_t scl, uint32_t addr);
+int i2c_enable ();
+int i2c_disable ();
+int i2c_master_transfer (const uint8_t *txbuf, size_t txbuf_len, uint8_t *rxbuf, size_t rxbuf_len);
+int i2c_master_send (const uint8_t *txbuf, size_t txbuf_len);
+int i2c_master_receive (uint8_t *rxbuf, size_t rxbuf_len);
 
 #endif /** __I2C__ **/
