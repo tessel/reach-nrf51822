@@ -322,14 +322,8 @@ int main(void)
   
 
   // set up and send i2c commands
-  i2c_init_config(16, 17, 0xDE);
+  i2c_init_config(16, 17, 0x1D);
   i2c_enable();
-
-  // pull scl and sda high
-  // nrf_gpio_cfg_output(scl);
-  // nrf_gpio_cfg_output(sda);
-  // NRF_GPIO->OUTSET = (1 << scl);
-  // NRF_GPIO->OUTSET = (1 << sda);
 
   uint8_t txbuf[1] = {0x0D};
   uint8_t rxbuf[1] = {0};
@@ -341,7 +335,7 @@ int main(void)
 
     if (rxbuf[0] == 0x2A) {
       // turn on led 1
-      LEDS_ON(LED_1);
+      LEDS_ON(1 << LED_1);
     }
     nrf_delay_ms(500);
   }

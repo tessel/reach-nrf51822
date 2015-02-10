@@ -37,8 +37,8 @@ static bool twi_master_clear_bus(int scl, int sda)
     uint32_t data_pin_config;
 
     // Save and disable TWI hardware so software can take control over the pins.
-    twi_state        = NRF_TWI0->ENABLE;
-    NRF_TWI0->ENABLE = TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos;
+    twi_state        = i2c_config.I2C_bus->ENABLE;
+    i2c_config.I2C_bus->ENABLE = TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos;
 
     clk_pin_config = \
         NRF_GPIO->PIN_CNF[scl];
@@ -91,7 +91,7 @@ static bool twi_master_clear_bus(int scl, int sda)
     NRF_GPIO->PIN_CNF[scl] = clk_pin_config;
     NRF_GPIO->PIN_CNF[sda]  = data_pin_config;
 
-    NRF_TWI0->ENABLE = twi_state;
+    i2c_config.I2C_bus->ENABLE = twi_state;
 
     return bus_clear;
 }
@@ -195,12 +195,12 @@ int i2c_power_cycle() {
 	// Recover the peripheral as indicated by PAN 56: "TWI: TWI module lock-up." found at
     // Product Anomaly Notification document found at 
     // https://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822/#Downloads
-    NRF_TWI0->EVENTS_ERROR = 0;
-    NRF_TWI0->ENABLE       = 0; //TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos; 
-    NRF_TWI0->POWER        = 0;
+    i2c_config.I2C_bus->EVENTS_ERROR = 0;
+    i2c_config.I2C_bus->ENABLE       = 0; //TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos; 
+    i2c_config.I2C_bus->POWER        = 0;
     nrf_delay_us(5);
-    NRF_TWI0->POWER        = 1;
-    NRF_TWI0->ENABLE       = I2C_ENABLE;//TWI_ENABLE_ENABLE_Enabled << TWI_ENABLE_ENABLE_Pos;
+    i2c_config.I2C_bus->POWER        = 1;
+    i2c_config.I2C_bus->ENABLE       = I2C_ENABLE;//TWI_ENABLE_ENABLE_Enabled << TWI_ENABLE_ENABLE_Pos;
 
     (void)(i2c_enable());
 
@@ -216,28 +216,28 @@ int i2c_master_send (const uint8_t *data, size_t txbuf_len) {
         return false;
     }
 
-    NRF_TWI0->TXD           = *data++;
-    NRF_TWI0->TASKS_STARTTX = 1;
+    i2c_config.I2C_bus->TXD           = *data++;
+    i2c_config.I2C_bus->TASKS_STARTTX = 1;
 
     /** @snippet [TWI HW master write] */
     while (true)
     {
-        while (NRF_TWI0->EVENTS_TXDSENT == 0 && NRF_TWI0->EVENTS_ERROR == 0 && (--timeout))
+        while (i2c_config.I2C_bus->EVENTS_TXDSENT == 0 && i2c_config.I2C_bus->EVENTS_ERROR == 0 && (--timeout))
         {
             // Do nothing.
         }
 
-        if (timeout == 0 || NRF_TWI0->EVENTS_ERROR != 0)
+        if (timeout == 0 || i2c_config.I2C_bus->EVENTS_ERROR != 0)
         {
             return i2c_power_cycle();
         }
-        NRF_TWI0->EVENTS_TXDSENT = 0;
+        i2c_config.I2C_bus->EVENTS_TXDSENT = 0;
         if (--txbuf_len == 0)
         {
             break;
         }
 
-        NRF_TWI0->TXD = *data++;
+        i2c_config.I2C_bus->TXD = *data++;
     }
     /** @snippet [TWI HW master write] */
 
@@ -265,37 +265,37 @@ int i2c_master_receive (uint8_t *rxbuf, size_t rxbuf_len) {
     }
     else if (rxbuf_len == 1)
     {
-        NRF_PPI->CH[0].TEP = (uint32_t)&NRF_TWI0->TASKS_STOP;
+        NRF_PPI->CH[0].TEP = (uint32_t)&(i2c_config.I2C_bus)->TASKS_STOP;
     }
     else
     {
-        NRF_PPI->CH[0].TEP = (uint32_t)&NRF_TWI0->TASKS_SUSPEND;
+        NRF_PPI->CH[0].TEP = (uint32_t)&(i2c_config.I2C_bus)->TASKS_SUSPEND;
     }
 
     NRF_PPI->CHENSET          = PPI_CHENSET_CH0_Msk;
-    NRF_TWI0->EVENTS_RXDREADY = 0;
-    NRF_TWI0->TASKS_STARTRX   = 1;
+    i2c_config.I2C_bus->EVENTS_RXDREADY = 0;
+    i2c_config.I2C_bus->TASKS_STARTRX   = 1;
 
     /** @snippet [TWI HW master read] */
     while (true)
     {
-        while (NRF_TWI0->EVENTS_RXDREADY == 0 && NRF_TWI0->EVENTS_ERROR == 0 && (--timeout))
+        while (i2c_config.I2C_bus->EVENTS_RXDREADY == 0 && i2c_config.I2C_bus->EVENTS_ERROR == 0 && (--timeout))
         {
             // Do nothing.
         }
-        NRF_TWI0->EVENTS_RXDREADY = 0;
+        i2c_config.I2C_bus->EVENTS_RXDREADY = 0;
 
-        if (timeout == 0 || NRF_TWI0->EVENTS_ERROR != 0)
+        if (timeout == 0 || i2c_config.I2C_bus->EVENTS_ERROR != 0)
         {
             return i2c_power_cycle();
         }
 
-        *rxbuf++ = NRF_TWI0->RXD;
+        *rxbuf++ = i2c_config.I2C_bus->RXD;
 
         /* Configure PPI to stop TWI master before we get last BB event */
         if (--rxbuf_len == 1)
         {
-            NRF_PPI->CH[0].TEP = (uint32_t)&NRF_TWI0->TASKS_STOP;
+            NRF_PPI->CH[0].TEP = (uint32_t)&(i2c_config.I2C_bus)->TASKS_STOP;
         }
 
         if (rxbuf_len == 0)
@@ -307,16 +307,16 @@ int i2c_master_receive (uint8_t *rxbuf, size_t rxbuf_len) {
         // Product Anomaly Notification document found at
         // https://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822/#Downloads
         nrf_delay_us(20);
-        NRF_TWI0->TASKS_RESUME = 1;
+        i2c_config.I2C_bus->TASKS_RESUME = 1;
     }
     /** @snippet [TWI HW master read] */
 
     /* Wait until stop sequence is sent */
-    while(NRF_TWI0->EVENTS_STOPPED == 0)
+    while(i2c_config.I2C_bus->EVENTS_STOPPED == 0)
     {
         // Do nothing.
     }
-    NRF_TWI0->EVENTS_STOPPED = 0;
+    i2c_config.I2C_bus->EVENTS_STOPPED = 0;
 
     NRF_PPI->CHENCLR = PPI_CHENCLR_CH0_Msk;
     return true;
