@@ -103,9 +103,16 @@ static bool twi_master_clear_bus(int scl, int sda)
     return bus_clear;
 }
 
+// void SPI0_TWI0_IRQHandler(void) {
+//     // check if we're sending or receiving
+//     // sending
+
+//     // recv
+
+// }
 
 // freq can be one of: 100 kbps (0x01980000), 
-void i2c_enable (int scl, int sda, I2C_freq freq, uint8_t addr) {
+void i2c_enable (int scl, int sda, I2C_freq freq, uint32_t addr) {
 	NRF_GPIO->PIN_CNF[scl] =     \
         (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos) \
       | (GPIO_PIN_CNF_DRIVE_S0D1     << GPIO_PIN_CNF_DRIVE_Pos) \
@@ -159,7 +166,7 @@ void i2c_disable (int scl, int sda) {
     NRF_TWI0->ENABLE = 0;
 }
 
-int i2c_master_transfer (int scl, int sda, I2C_freq freq, uint8_t addr,
+int i2c_master_transfer (int scl, int sda, I2C_freq freq, uint32_t addr,
 	const uint8_t *txbuf, size_t txbuf_len, uint8_t *rxbuf, size_t rxbuf_len)
 {
 	bool transfer_succeeded = false;
@@ -168,13 +175,13 @@ int i2c_master_transfer (int scl, int sda, I2C_freq freq, uint8_t addr,
 	}
 	
 	if (rxbuf_len > 0) {
-        transfer_succeeded = transfer_succeeded | i2c_master_receive(scl, sda, freq, addr, rxbuf, rxbuf_len);
+        transfer_succeeded = transfer_succeeded & i2c_master_receive(scl, sda, freq, addr, rxbuf, rxbuf_len);
 	}
 
 	return transfer_succeeded;
 }
 
-int i2c_power_cycle(int scl, int sda, I2C_freq freq, uint8_t addr) {
+int i2c_power_cycle(int scl, int sda, I2C_freq freq, uint32_t addr) {
 	// Recover the peripheral as indicated by PAN 56: "TWI: TWI module lock-up." found at
     // Product Anomaly Notification document found at 
     // https://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822/#Downloads
@@ -190,7 +197,7 @@ int i2c_power_cycle(int scl, int sda, I2C_freq freq, uint8_t addr) {
     return false;
 }
 
-int i2c_master_send (int scl, int sda, I2C_freq freq, uint8_t addr, const uint8_t *data, size_t txbuf_len) {
+int i2c_master_send (int scl, int sda, I2C_freq freq, uint32_t addr, const uint8_t *data, size_t txbuf_len) {
 	uint32_t timeout = MAX_WAIT; /* max loops to wait for EVENTS_TXDSENT event*/
 
     if (txbuf_len == 0)
@@ -227,18 +234,18 @@ int i2c_master_send (int scl, int sda, I2C_freq freq, uint8_t addr, const uint8_
     // if (issue_stop_condition)
     // {
     // always issue stop condition?
-        NRF_TWI1->EVENTS_STOPPED = 0;
-        NRF_TWI1->TASKS_STOP     = 1;
-        /* Wait until stop sequence is sent */ 
-        while(NRF_TWI1->EVENTS_STOPPED == 0) 
-        {
-            // Do nothing.
-        }
+        // NRF_TWI0->EVENTS_STOPPED = 0;
+        // NRF_TWI0->TASKS_STOP     = 1;
+        // /* Wait until stop sequence is sent */ 
+        // while(NRF_TWI0->EVENTS_STOPPED == 0) 
+        // {
+        //     // Do nothing.
+        // }
     // }
     return true;
 }
 
-int i2c_master_receive (int scl, int sda, I2C_freq freq, uint8_t addr, uint8_t *rxbuf, size_t rxbuf_len) {
+int i2c_master_receive (int scl, int sda, I2C_freq freq, uint32_t addr, uint8_t *rxbuf, size_t rxbuf_len) {
 	uint32_t timeout = MAX_WAIT; /* max loops to wait for RXDREADY event*/
 
     if (rxbuf_len == 0)

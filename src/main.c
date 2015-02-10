@@ -28,6 +28,9 @@
 #include "app_timer.h"
 #include "ble_gap.h"
 #include "gossip.h"
+#include "i2c.h"
+#include "nrf_delay.h"
+#include "nrf_gpio.h"
 // #include "device_manager.h"
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                 /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
@@ -296,22 +299,55 @@ static void make_gossip(void)
 /**
 * @brief Function for application main entry.
 */
+const uint8_t leds_list[LEDS_NUMBER] = LEDS_LIST;
 int main(void)
 {
   // Initialize.
-  ble_stack_init();
-  make_gossip();
-  gatt_init();
-  advertising_init();
+  // Configure LED-pins as outputs.
+  LEDS_CONFIGURE(LEDS_MASK);
   
-  // Start execution.
-  advertising_start();
+  // ble_stack_init();
+  // make_gossip();
+  // gatt_init();
+  // advertising_init();
   
-  // Enter main loop.
-  for (;; )
-  {
-    power_manage();
+  // // Start execution.
+  // advertising_start();
+  
+  // // Enter main loop.
+  // for (;; )
+  // {
+  //   power_manage();
+  // }
+  
+
+  // set up and send i2c commands
+  int scl = 16;
+  int sda = 17;
+
+  // pull scl and sda high
+  // nrf_gpio_cfg_output(scl);
+  // nrf_gpio_cfg_output(sda);
+  // NRF_GPIO->OUTSET = (1 << scl);
+  // NRF_GPIO->OUTSET = (1 << sda);
+
+  uint8_t txbuf[1] = {0x0D};
+  i2c_enable(scl, sda, I2C_400KPBS, 0xDE);
+  uint8_t rxbuf[1] = {0};
+
+  while (1) {
+    LEDS_INVERT(1 << leds_list[0]);
+    // i2c_master_send(scl, sda, I2C_400KPBS, 0x1D, txbuf, 5);
+    i2c_master_transfer(scl, sda, I2C_400KPBS, 0x1D,
+     txbuf, 1, rxbuf, 1);
+
+    if (rxbuf[0] == 0x2A) {
+      // turn on led 1
+      LEDS_ON(LED_1);
+    }
+    nrf_delay_ms(500);
   }
+
 }
 
 
