@@ -50,7 +50,6 @@
 
 #define CONNECTABLE_ADV_INTERVAL      MSEC_TO_UNITS(20, UNIT_0_625_MS)              /**< The advertising interval for connectable advertisement (20 ms). This value can vary between 20ms to 10.24s. */
 #define NON_CONNECTABLE_ADV_INTERVAL  MSEC_TO_UNITS(100, UNIT_0_625_MS)             /**< The advertising interval for non-connectable advertisement (100 ms). This value can vary between 100ms to 10.24s). */
-#define CONNECTABLE_ADV_TIMEOUT       30                                            /**< Time for which the device must be advertising in connectable mode (in seconds). */
 
 const char*                     device_name = "Reach";
 static uint16_t                 m_conn_handle = BLE_CONN_HANDLE_INVALID;
@@ -105,7 +104,7 @@ static void advertising_init(void)
   m_adv_params.p_peer_addr = NULL;                             // Undirected advertisement.
   m_adv_params.fp          = BLE_GAP_ADV_FP_ANY;
   m_adv_params.interval    = CONNECTABLE_ADV_INTERVAL;
-  m_adv_params.timeout     = CONNECTABLE_ADV_TIMEOUT;
+  m_adv_params.timeout     = BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED;
 }
 
 
