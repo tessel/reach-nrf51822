@@ -54,8 +54,6 @@ const char*                     device_name = "Reach";
 static uint16_t                 m_conn_handle = BLE_CONN_HANDLE_INVALID;
 static ble_gap_adv_params_t     m_adv_params;
 ble_advdata_uuid_list_t         services;
-static uint8_t                  command_char_value[MAX_CHAR_VAL_LEN];
-static uint8_t                  response_char_value[MAX_CHAR_VAL_LEN];
 gossip_t                        gossip;
 
 /**@brief Callback function for asserts in the SoftDevice.
@@ -134,7 +132,7 @@ static ble_uuid_t make_uuid(ble_uuid128_t base, uint16_t id)
   return uuid;
 }
 
-static void char_add(uint16_t m_service_handle, ble_uuid_t char_uuid, uint8_t *m_char_value, ble_gatts_char_handles_t m_char_handles)
+static void char_add(uint16_t m_service_handle, ble_uuid_t char_uuid, ble_gatts_char_handles_t * m_char_handles)
 {
   uint32_t            err_code;
   ble_gatts_char_md_t char_md;
@@ -161,26 +159,25 @@ static void char_add(uint16_t m_service_handle, ble_uuid_t char_uuid, uint8_t *m
   memset(&attr_md, 0, sizeof(attr_md));
   
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
-  BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
+  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
   
   attr_md.vloc    = BLE_GATTS_VLOC_STACK;
   attr_md.rd_auth = 0;
   attr_md.wr_auth = 0;
-  attr_md.vlen    = 0;
+  attr_md.vlen    = 1;
   
   memset(&attr_char_value, 0, sizeof(attr_char_value));
   
   attr_char_value.p_uuid    = &char_uuid;
   attr_char_value.p_attr_md = &attr_md;
-  attr_char_value.init_len  = BLE_GATTS_FIX_ATTR_LEN_MAX;
+  attr_char_value.init_len  = 6;
   attr_char_value.init_offs = 0;
-  attr_char_value.max_len   = BLE_GATTS_FIX_ATTR_LEN_MAX;
-  attr_char_value.p_value   = m_char_value;
+  attr_char_value.max_len   = 256;
   
   err_code = sd_ble_gatts_characteristic_add(m_service_handle,
   &char_md,
   &attr_char_value,
-  &m_char_handles);
+  m_char_handles);
   APP_ERROR_CHECK(err_code);
 }
 
@@ -207,10 +204,10 @@ static void gatt_init(void)
   err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &gossip_service_uuid, &gossip_service_handle);
   gossip.service_handle = gossip_service_handle;
   
-  char_add(gossip_service_handle, command_char_uuid, command_char_value, command_char_handle);
+  char_add(gossip_service_handle, command_char_uuid, &command_char_handle);
   gossip.command_handles = command_char_handle;
   
-  char_add(gossip_service_handle, response_char_uuid, response_char_value, response_char_handle);
+  char_add(gossip_service_handle, response_char_uuid, &response_char_handle);
   gossip.response_handles = response_char_handle;
   
 
