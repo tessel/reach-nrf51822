@@ -40,11 +40,10 @@
 
 #define DEAD_BEEF                       0xDEADBEEF                        /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
-#define GOSSIP_UUID_BASE                {0x88, 0x43, 0x90, 0x00, 0x95, 0x50, 0x43, 0xA0, 0xB7, 0x2E, 0x6C, 0x8E, 0x00, 0x00, 0x00, 0x00}
-#define GOSSIP_UUID_SERVICE             0x9700
-#define GOSSIP_UUID_COMMAND             0x9701
-#define GOSSIP_UUID_RESPONSE            0x9702
-// #define REACH_CONFIG                    0x88439001955043A0B72E6C8E97000000
+#define GOSSIP_UUID_BASE                {0x45, 0x6A, 0x11, 0x40, 0xC6, 0x9B, 0x1C, 0xA4, 0x52, 0x4F, 0x19, 0xD4, 0x00, 0x00, 0x2A, 0xD3}
+#define GOSSIP_UUID_SERVICE             0x1100
+#define GOSSIP_UUID_COMMAND             0x1101
+#define GOSSIP_UUID_RESPONSE            0x1102
 
 #define MAX_CHAR_VAL_LEN                32
 
