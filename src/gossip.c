@@ -1,5 +1,18 @@
 #include "gossip.h"
 
+// Notify connected client with new data
+static uint32_t notify(gossip_t * gossip, uint16_t handle, uint16_t len, uint8_t * data){
+  ble_gatts_hvx_params_t m_hvx_params;
+
+  m_hvx_params.handle = handle;
+  m_hvx_params.type = BLE_GATT_HVX_NOTIFICATION;
+  m_hvx_params.offset = 0;
+  m_hvx_params.p_len = &len;
+  m_hvx_params.p_data = data;
+
+  return sd_ble_gatts_hvx(gossip->conn_handle, &m_hvx_params);
+}
+
 // Gets called when connect event occurs
 static void on_connect(gossip_t * gossip, ble_evt_t * p_ble_evt)
 {
@@ -23,13 +36,18 @@ static void on_cccd_write(gossip_t * gossip, ble_gatts_evt_write_t * p_evt_write
     {
       ble_gossip_evt_t evt;
 
-      if (ble_srv_is_indication_enabled(p_evt_write->data))
+      if (ble_srv_is_notification_enabled(p_evt_write->data))
       {
-        evt.evt_type = BLE_GOSSIP_EVT_INDICATION_ENABLED;
+        evt.evt_type = BLE_GOSSIP_EVT_NOTIFICATION_ENABLED;
+        
+        uint16_t len = 2;
+        uint8_t data[2] = {0x80, 0x80};
+        
+        notify(gossip, gossip->response_handles.value_handle, len, data);
       }
       else
       {
-        evt.evt_type = BLE_GOSSIP_EVT_INDICATION_DISABLED;
+        evt.evt_type = BLE_GOSSIP_EVT_NOTIFICATION_DISABLED;
       }
 
       gossip->evt_handler(gossip, &evt);
@@ -51,10 +69,8 @@ static void on_write(gossip_t * gossip, ble_evt_t * p_ble_evt)
     on_cccd_write(gossip, p_evt_write);
   } else if (p_evt_write->handle == gossip->command_handles.value_handle)
   {
-    
+    notify(gossip, gossip->response_handles.value_handle, p_evt_write->len, p_evt_write->data);
   }
-  
-  sd_ble_gatts_value_set( gossip->response_handles.value_handle, 0, &p_evt_write->len, p_evt_write->data);
 }
 
 // Gets called when a value has been confirmed by the client

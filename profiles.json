@@ -33,17 +33,17 @@
     },
     {
       "name": "Gossip IO Protocol Service",
-      "uuid": "88439000-9550-43A0-B72E-6C8E97000000",
+      "uuid": "D32A1100-D419-4F52-A41C-9BC640116A45",
       "characteristics": [
         {
           "name": "gossip_commands",
-          "uuid": "88439000-9550-43A0-B72E-6C8E97010000",
+          "uuid": "D32A1101-D419-4F52-A41C-9BC640116A45",
           "properties": ["read", "write", "writewithoutresponse"],
           "type": "raw"
         },
         {
           "name": "gossip_responses",
-          "uuid": "88439000-9550-43A0-B72E-6C8E97020000",
+          "uuid": "D32A1101-D419-4F52-A41C-9BC640116A45",
           "properties": ["read", "notify", "indicate"],
           "type": "raw"
         }
@@ -51,14 +51,14 @@
     },
     {
       "name": "Reach Configuration Protocol Service",
-      "uuid": "88439000-9550-43A0-B72E-6C8E98000000",
+      "uuid": "D32A1200-D419-4F52-A41C-9BC640116A45",
       "characteristics": [
         //TODO
       ]
     },
     {
       "name": "Reach OTA Update Protocol Service",
-      "uuid": "88439000-9550-43A0-B72E-6C8E99000000",
+      "uuid": "D32A13-D419-4F52-A41C-9BC640116A45",
       "characteristics": [
         //TODO
       ]

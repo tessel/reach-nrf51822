@@ -40,24 +40,20 @@
 
 #define DEAD_BEEF                       0xDEADBEEF                        /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
-#define GOSSIP_UUID_BASE                {0x88, 0x43, 0x90, 0x00, 0x95, 0x50, 0x43, 0xA0, 0xB7, 0x2E, 0x6C, 0x8E, 0x00, 0x00, 0x00, 0x00}
-#define GOSSIP_UUID_SERVICE             0x9700
-#define GOSSIP_UUID_COMMAND             0x9701
-#define GOSSIP_UUID_RESPONSE            0x9702
-// #define REACH_CONFIG                    0x88439001955043A0B72E6C8E97000000
+#define GOSSIP_UUID_BASE                {0x45, 0x6A, 0x11, 0x40, 0xC6, 0x9B, 0x1C, 0xA4, 0x52, 0x4F, 0x19, 0xD4, 0x00, 0x00, 0x2A, 0xD3}
+#define GOSSIP_UUID_SERVICE             0x1100
+#define GOSSIP_UUID_COMMAND             0x1101
+#define GOSSIP_UUID_RESPONSE            0x1102
 
 #define MAX_CHAR_VAL_LEN                32
 
 #define CONNECTABLE_ADV_INTERVAL      MSEC_TO_UNITS(20, UNIT_0_625_MS)              /**< The advertising interval for connectable advertisement (20 ms). This value can vary between 20ms to 10.24s. */
 #define NON_CONNECTABLE_ADV_INTERVAL  MSEC_TO_UNITS(100, UNIT_0_625_MS)             /**< The advertising interval for non-connectable advertisement (100 ms). This value can vary between 100ms to 10.24s). */
-#define CONNECTABLE_ADV_TIMEOUT       30                                            /**< Time for which the device must be advertising in connectable mode (in seconds). */
 
 const char*                     device_name = "Reach";
 static uint16_t                 m_conn_handle = BLE_CONN_HANDLE_INVALID;
 static ble_gap_adv_params_t     m_adv_params;
 ble_advdata_uuid_list_t         services;
-static uint8_t                  command_char_value[MAX_CHAR_VAL_LEN];
-static uint8_t                  response_char_value[MAX_CHAR_VAL_LEN];
 gossip_t                        gossip;
 
 /**@brief Callback function for asserts in the SoftDevice.
@@ -105,7 +101,7 @@ static void advertising_init(void)
   m_adv_params.p_peer_addr = NULL;                             // Undirected advertisement.
   m_adv_params.fp          = BLE_GAP_ADV_FP_ANY;
   m_adv_params.interval    = CONNECTABLE_ADV_INTERVAL;
-  m_adv_params.timeout     = CONNECTABLE_ADV_TIMEOUT;
+  m_adv_params.timeout     = BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED;
 }
 
 
@@ -136,7 +132,7 @@ static ble_uuid_t make_uuid(ble_uuid128_t base, uint16_t id)
   return uuid;
 }
 
-static void char_add(uint16_t m_service_handle, ble_uuid_t char_uuid, uint8_t *m_char_value, ble_gatts_char_handles_t m_char_handles)
+static void char_add(uint16_t m_service_handle, ble_uuid_t char_uuid, ble_gatts_char_handles_t * m_char_handles)
 {
   uint32_t            err_code;
   ble_gatts_char_md_t char_md;
@@ -153,6 +149,7 @@ static void char_add(uint16_t m_service_handle, ble_uuid_t char_uuid, uint8_t *m
   memset(&char_md, 0, sizeof(char_md));
   
   char_md.char_props.read   = 1;
+  char_md.char_props.write   = 1;
   char_md.char_props.notify = 1;
   char_md.p_char_user_desc  = NULL;
   char_md.p_char_pf         = NULL;
@@ -163,26 +160,25 @@ static void char_add(uint16_t m_service_handle, ble_uuid_t char_uuid, uint8_t *m
   memset(&attr_md, 0, sizeof(attr_md));
   
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
-  BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
+  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
   
   attr_md.vloc    = BLE_GATTS_VLOC_STACK;
   attr_md.rd_auth = 0;
   attr_md.wr_auth = 0;
-  attr_md.vlen    = 0;
+  attr_md.vlen    = 1;
   
   memset(&attr_char_value, 0, sizeof(attr_char_value));
   
   attr_char_value.p_uuid    = &char_uuid;
   attr_char_value.p_attr_md = &attr_md;
-  attr_char_value.init_len  = BLE_GATTS_FIX_ATTR_LEN_MAX;
+  attr_char_value.init_len  = 6;
   attr_char_value.init_offs = 0;
-  attr_char_value.max_len   = BLE_GATTS_FIX_ATTR_LEN_MAX;
-  attr_char_value.p_value   = m_char_value;
+  attr_char_value.max_len   = 256;
   
   err_code = sd_ble_gatts_characteristic_add(m_service_handle,
   &char_md,
   &attr_char_value,
-  &m_char_handles);
+  m_char_handles);
   APP_ERROR_CHECK(err_code);
 }
 
@@ -209,10 +205,10 @@ static void gatt_init(void)
   err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &gossip_service_uuid, &gossip_service_handle);
   gossip.service_handle = gossip_service_handle;
   
-  char_add(gossip_service_handle, command_char_uuid, command_char_value, command_char_handle);
+  char_add(gossip_service_handle, command_char_uuid, &command_char_handle);
   gossip.command_handles = command_char_handle;
   
-  char_add(gossip_service_handle, response_char_uuid, response_char_value, response_char_handle);
+  char_add(gossip_service_handle, response_char_uuid, &response_char_handle);
   gossip.response_handles = response_char_handle;
   
 
