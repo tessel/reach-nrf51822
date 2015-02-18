@@ -66,7 +66,6 @@ $(SDK_PATH)components/ble/common/ble_conn_params.c \
 $(SDK_PATH)components/ble/common/ble_advdata.c \
 $(SDK_PATH)components/ble/common/ble_srv_common.c \
 
-
 #assembly files common to all targets
 ASM_SOURCE_FILES  = $(SDK_PATH)components/toolchain/gcc/gcc_startup_nrf51.s
 

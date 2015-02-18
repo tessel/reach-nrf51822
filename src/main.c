@@ -296,30 +296,30 @@ static void make_gossip(void)
   
 }
 
+const uint8_t leds_list[LEDS_NUMBER] = LEDS_LIST;
+
 /**
 * @brief Function for application main entry.
 */
-const uint8_t leds_list[LEDS_NUMBER] = LEDS_LIST;
 int main(void)
 {
   // Initialize.
+  ble_stack_init();
+  make_gossip();
+  gatt_init();
+  advertising_init();
+
   // Configure LED-pins as outputs.
   LEDS_CONFIGURE(LEDS_MASK);
   
-  // ble_stack_init();
-  // make_gossip();
-  // gatt_init();
-  // advertising_init();
+  // Start execution.
+  advertising_start();
   
-  // // Start execution.
-  // advertising_start();
-  
-  // // Enter main loop.
-  // for (;; )
-  // {
-  //   power_manage();
-  // }
-  
+  // Enter main loop.
+  for (;; )
+  {
+    power_manage();
+  }
 
   // set up and send i2c commands
   i2c_init_config(16, 17, 0x1D);
@@ -339,7 +339,6 @@ int main(void)
     }
     nrf_delay_ms(500);
   }
-
 }
 
 
