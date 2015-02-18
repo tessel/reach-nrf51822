@@ -149,6 +149,7 @@ static void char_add(uint16_t m_service_handle, ble_uuid_t char_uuid, ble_gatts_
   memset(&char_md, 0, sizeof(char_md));
   
   char_md.char_props.read   = 1;
+  char_md.char_props.write   = 1;
   char_md.char_props.notify = 1;
   char_md.p_char_user_desc  = NULL;
   char_md.p_char_pf         = NULL;
