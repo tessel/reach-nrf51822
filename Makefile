@@ -59,6 +59,7 @@ $(SDK_PATH)components/drivers_nrf/uart/app_uart_fifo.c \
 $(SDK_PATH)components/drivers_nrf/hal/nrf_delay.c \
 src/main.c \
 src/gossip.c \
+src/i2c.c \
 $(SDK_PATH)components/softdevice/common/softdevice_handler/softdevice_handler.c \
 $(SDK_PATH)components/toolchain/system_nrf51.c \
 $(SDK_PATH)components/ble/common/ble_conn_params.c \
@@ -277,4 +278,7 @@ stopdebug:
 debug.jlink:
 	echo "Device nrf51822" > $(OUTPUT_BINARY_DIRECTORY)/debug.jlink
 
-.PHONY: flash flash-softdevice erase-all startdebug stopdebug
+test:
+	node test/loopback.js
+
+.PHONY: flash flash-softdevice erase-all startdebug stopdebug test

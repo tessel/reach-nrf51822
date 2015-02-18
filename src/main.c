@@ -28,6 +28,9 @@
 #include "app_timer.h"
 #include "ble_gap.h"
 #include "gossip.h"
+#include "i2c.h"
+#include "nrf_delay.h"
+#include "nrf_gpio.h"
 // #include "device_manager.h"
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                 /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
@@ -293,6 +296,8 @@ static void make_gossip(void)
   
 }
 
+const uint8_t leds_list[LEDS_NUMBER] = LEDS_LIST;
+
 /**
 * @brief Function for application main entry.
 */
@@ -303,6 +308,9 @@ int main(void)
   make_gossip();
   gatt_init();
   advertising_init();
+
+  // Configure LED-pins as outputs.
+  LEDS_CONFIGURE(LEDS_MASK);
   
   // Start execution.
   advertising_start();
@@ -311,6 +319,25 @@ int main(void)
   for (;; )
   {
     power_manage();
+  }
+
+  // set up and send i2c commands
+  i2c_init_config(16, 17, 0x1D);
+  i2c_enable();
+
+  uint8_t txbuf[1] = {0x0D};
+  uint8_t rxbuf[1] = {0};
+
+  while (1) {
+    LEDS_INVERT(1 << leds_list[0]);
+    // i2c_master_send(scl, sda, I2C_400KPBS, 0x1D, txbuf, 5);
+    i2c_master_transfer(txbuf, 1, rxbuf, 1);
+
+    if (rxbuf[0] == 0x2A) {
+      // turn on led 1
+      LEDS_ON(1 << LED_1);
+    }
+    nrf_delay_ms(500);
   }
 }
 
