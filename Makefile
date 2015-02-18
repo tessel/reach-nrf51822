@@ -278,4 +278,7 @@ stopdebug:
 debug.jlink:
 	echo "Device nrf51822" > $(OUTPUT_BINARY_DIRECTORY)/debug.jlink
 
-.PHONY: flash flash-softdevice erase-all startdebug stopdebug
+test:
+	node test/loopback.js
+
+.PHONY: flash flash-softdevice erase-all startdebug stopdebug test
