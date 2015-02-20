@@ -19,6 +19,8 @@ GNU_VERSION := $(shell $(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-gcc -dumpversion)
 MK := mkdir
 RM := rm -rf
 
+MANUFACTURER_DATA := "Technical Machine"
+
 #echo suspend
 ifeq ("$(VERBOSE)","1")
 NO_ECHO := 
@@ -107,6 +109,7 @@ CFLAGS += -mfloat-abi=soft
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -flto -fno-builtin
 CFLAGS += -ggdb
+CFLAGS += -D MANUFACTURER_DATA="\"$(MANUFACTURER_DATA)\""
 
 # keep every function in separate section. This will allow linker to dump unused functions
 LDFLAGS += -Xlinker -Map=$(LISTING_DIRECTORY)/$(OUTPUT_FILENAME).map

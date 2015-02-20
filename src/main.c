@@ -59,6 +59,14 @@ static ble_gap_adv_params_t     m_adv_params;
 ble_advdata_uuid_list_t         services;
 gossip_t                        gossip;
 
+#ifndef MANUFACTURER_DATA
+#define MANUFACTURER_DATA "Technical Machine"
+#endif
+
+uint8_t manu_data[18] = MANUFACTURER_DATA;
+
+ble_advdata_manuf_data_t manuf_specific_data;
+
 /**@brief Callback function for asserts in the SoftDevice.
 *
 * @details This function will be called in case of an assert in the SoftDevice.
@@ -92,7 +100,12 @@ static void advertising_init(void)
   advdata.name_type             = BLE_ADVDATA_SHORT_NAME ;
   advdata.flags.size            = sizeof (flags);
   advdata.flags.p_data          = &flags;
-  // advdata.p_manuf_specific_data = &manuf_specific_data;
+
+  manuf_specific_data.company_identifier = ((manu_data[1] << 8) + manu_data[0]);
+  manuf_specific_data.data.size = sizeof(manu_data) - 2;
+  manuf_specific_data.data.p_data = &manu_data[2];
+
+  advdata.p_manuf_specific_data = &manuf_specific_data;
   
   err_code = ble_advdata_set(&advdata, NULL);
   APP_ERROR_CHECK(err_code);
