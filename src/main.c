@@ -61,13 +61,10 @@ static uint8_t                  response_char_value[MAX_CHAR_VAL_LEN];
 gossip_t                        gossip;
 
 #ifndef MANUFACTURER_DATA
-#define MANUFACTURER_DATA Technical Machine
+#define MANUFACTURER_DATA "Technical Machine"
 #endif
 
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
-
-uint8_t manu_data[18] = TOSTRING(MANUFACTURER_DATA);
+uint8_t manu_data[18] = MANUFACTURER_DATA;
 
 ble_advdata_manuf_data_t manuf_specific_data;
 
