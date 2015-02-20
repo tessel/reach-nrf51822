@@ -19,7 +19,7 @@ GNU_VERSION := $(shell $(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-gcc -dumpversion)
 MK := mkdir
 RM := rm -rf
 
-MANUFACTURER_DATA := "Technical Machine"
+MANUFACTURER_DATA := Technical Machine
 
 #echo suspend
 ifeq ("$(VERBOSE)","1")

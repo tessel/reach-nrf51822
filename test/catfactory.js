@@ -7,7 +7,7 @@ while ((cat = cats()) && new Buffer(cat).length > 18) {
 
 var spawnSync = require('child_process').spawnSync;
 
-var ret = spawnSync('make', ['MANUFACTURER_DATA="' + cat + '"'], {
+var ret = spawnSync('make', ['MANUFACTURER_DATA=' + cat], {
 	cwd: __dirname + '/../',
 	stdio: 'inherit',
 });
