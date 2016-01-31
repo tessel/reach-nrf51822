@@ -12,7 +12,7 @@ Run `make flash-softdevice` to get the softdevice onto the nrf51822.
 
 **Install JLink GDB server.** scroll down to "J-Link software & documentation pack for MAC") https://www.segger.com/jlink-software.html
 
-**Install Noric packages.** Try the following handy script.
+**Install Nordic packages.** Try the following handy script.
 
 ```
 mkdir -p nRF51_SDK_7.1.0
